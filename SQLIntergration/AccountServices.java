@@ -4,111 +4,171 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 
 public class AccountServices {
-	public void showAllCourses() throws SQLException {
+	public void registerNewUser(String name, String username, String password) throws SQLException {
 		Connection connection = SQLConnection.makeConnection();
+		PreparedStatement preStmt = null;
 
-		String SQL = "SELECT * FROM courses;";
-		
-		Statement stmt = connection.createStatement();
+		String SQL = "INSERT INTO user (`name`, `username`, `password`) VALUES (?, ?, ?);";
 
-		ResultSet resultSet = stmt.executeQuery(SQL);
-		
-		ArrayList<Course> courses = new ArrayList<Course>();
+		preStmt = connection.prepareStatement(SQL);
 
-		while (resultSet.next()) {
-			Course course = new Course();
+		preStmt.setString(1, name);
+		preStmt.setString(2, username);
+		preStmt.setString(3, password);
 
-			course.setId(resultSet.getInt("ID"));
-			course.setName(resultSet.getString("Name"));
-			course.setBegin(resultSet.getDate("BeginDate"));
-			course.setEnd(resultSet.getDate("EndDate"));
-			course.setFee(resultSet.getInt("Fee"));
-			course.setMentors(getMentorsViaCourseID(course.getId(), connection));
-			courses.add(course);
-		}
-		
+		preStmt.executeUpdate();
+
 		System.out.println("----------------------");
-		for (Course course : courses) {
-			System.out.println(course.getId() + ". " + course.getName());
-		}
+		System.out.println("Account Registered Successfully!");
 	}
 
-	public ArrayList<Mentor> getMentorsViaCourseID(int courseId, Connection connection) throws SQLException {
-		String sql = "SELECT m.* FROM courses c "
-				+ "JOIN coursesmentors cm ON c.id = cm.course_id "
-				+ "JOIN mentor m ON m.id = cm.mentor_id "
-				+ "WHERE c.id = ?;";
+	public boolean login(String username, String password) throws SQLException {
+		Connection connection = SQLConnection.makeConnection();
 
-		ArrayList<Mentor> mentors = new ArrayList<Mentor>();
-		
+		String sql = "SELECT u.* FROM user u WHERE username = ?";
+
 		PreparedStatement preStmt = connection.prepareStatement(sql);
-		
-		preStmt.setInt(1, courseId);
+		preStmt.setString(1, username);
 
 		ResultSet resultSet = preStmt.executeQuery();
 
-		while (resultSet.next()) {
-			Mentor mentor = new Mentor();
-			mentor.setName(resultSet.getString("Name"));
-			mentors.add(mentor);
+		if (!resultSet.next()) {
+			System.out.println("----------------------");
+			System.out.println("Account not found. Please try again.");
+			return false;
 		}
-		return mentors;
+
+		Account account = new Account();
+		account.setUsername(resultSet.getString("email"));
+		account.setPassword(resultSet.getString("password"));
+		account.setFailedAttempts(resultSet.getInt("FailedAttempts"));
+
+		if (!account.getPassword().equals(password)) {
+			System.out.println("----------------------");
+			System.out.println("Incorrect password. Please try again.");
+			updateFailedAttempts(account.getUsername());
+			return false;
+		}
+
+		if (account.getFailedAttempts() >= 4) {
+			System.out.println("----------------------");
+			System.out.println("Account is locked!");
+			return false;
+
+		} else {
+			System.out.println("----------------------");
+			System.out.println("Login successfully!");
+		}
+
+		return true;
 	}
 
-	public ArrayList<Mentor> getAllMentors() throws SQLException {
+	public void updateFailedAttempts(String username) throws SQLException {
 		Connection connection = SQLConnection.makeConnection();
 
-		String SQL = "SELECT * FROM mentors";
-		
-		Statement stmt = connection.createStatement();
-		
-		ResultSet resultSet = stmt.executeQuery(SQL);
-		
-		ArrayList<Mentor> mentors = new ArrayList<Mentor>();
-		
-		while (resultSet.next()) {
-			int id = resultSet.getInt("id");
-			String name = resultSet.getString("name");
-			Mentor mentor = new Mentor(id, name);
-			mentors.add(mentor);
-		}
-		return mentors;
-	}
-
-	public void showCourseDetails(int id) throws SQLException {
-		Connection connection = SQLConnection.makeConnection();
-		
-		String sql = "SELECT c.*, m.name as mentorName FROM course c "
-				+ "JOIN coursesmentors cm ON c.id = cm.course_id "
-				+ "JOIN mentors m ON m.id = cm.mentor_id WHERE c.id = ? "
-				+ "GROUP BY c.id, c.name, c.begin, c.end, c.fee";
+		String sql = "UPDATE account SET `FailedAttempts` = FailedAttempts + 1 WHERE username = ?";
 
 		PreparedStatement preStmt = connection.prepareStatement(sql);
-		
+
+		preStmt.setString(1, username);
+
+		preStmt.executeUpdate();
+	}
+
+	public void showAccountEnrolledCourses(int id) throws SQLException {
+		Connection connection = SQLConnection.makeConnection();
+
+		String sql = "SELECT ac.* FROM accounts a " 
+		+ "JOIN accountscourses ac "
+		+ "ON ac.user_id = a.id WHERE a.id = ?;";
+
+		CourseServices courseService = new CourseServices();
+
+		PreparedStatement preStmt = connection.prepareStatement(sql);
+
 		preStmt.setInt(1, id);
 
 		ResultSet resultSet = preStmt.executeQuery();
 
-		Course course = new Course();
-		course.setId(resultSet.getInt("ID"));
-		course.setName(resultSet.getString("Name"));
-		course.setBegin(resultSet.getDate("BeginDate"));
-		course.setEnd(resultSet.getDate("EndDate"));
-		course.setFee(resultSet.getInt("Fee"));
-		course.setMentors(getMentorsViaCourseID(course.getId(), connection));
+		ArrayList<Course> accountCourses = new ArrayList<Course>();
+
+		while (resultSet.next()) {
+			Course course = new Course();
+			course.setId(resultSet.getInt("course_id"));
+			accountCourses.add(course);
+		}
 
 		System.out.println("----------------------");
-		System.out.println(course.getName());
-		System.out.println("Course's Mentors:");
-		for (Mentor mentor : course.getMentors()) {
-			System.out.println(mentor.getName());
+		System.out.println("Enrolled Courses: ");
+
+		for (Course course : accountCourses) {
+			if (course.getId() == 0) {
+				System.out.println("----------------------");
+				System.out.println("Currently not enrolled in any courses.");
+			} else {
+				courseService.showCourseDetails(course.getId());
+			}
 		}
-		System.out.println("From " + course.getBegin());
-		System.out.println("To " + course.getEnd());
-		System.out.println("Course's fee: AUD" + course.getFee());
+
+	}
+
+	public void enrolledInNewCourse(int courseId, int accountId) throws SQLException {
+		Connection connection = SQLConnection.makeConnection();
+		String sql = "SELECT * FROM accountscourses WHERE account_id = ?;";
+
+		PreparedStatement preStmt = connection.prepareStatement(sql);
+
+		preStmt.setInt(1, accountId);
+
+		ResultSet resultSet = preStmt.executeQuery();
+
+		while (resultSet.next()) {
+			if (resultSet.getInt("course_id") == 0) {
+				updateNewCourse(connection, courseId, accountId);
+				System.out.println("----------------------");
+				System.out.println("Enrolled in course successfully");
+
+				return;
+			}
+			if (resultSet.getInt("course_id") == courseId) {
+				System.out.println("----------------------");
+				System.out.println("Course already enrolled!");
+				return;
+			}
+			if (resultSet.getInt("course_id") != courseId) {
+				insertNewCourse(connection, accountId, courseId);
+				System.out.println("----------------------");
+				System.out.println("Enrolled in course successfully");
+				return;
+			}
+		}
+	}
+
+	public void updateNewCourse(Connection connection, int courseId, int accountId) throws SQLException {
+		String sql = "UPDATE accountscourses SET course_id = ? WHERE (`account_id` = ?) and (`course_id` = '0');";
+
+		PreparedStatement preStmt = connection.prepareStatement(sql);
+
+		preStmt.setInt(1, courseId);
+
+		preStmt.setInt(2, accountId);
+
+		preStmt.executeUpdate();
+
+	}
+
+	public void insertNewCourse(Connection connection, int accountId, int courseId) throws SQLException {
+		String sql = "INSERT INTO accountscourses (`account_id`, `course_id`) VALUES (?, ?);";
+
+		PreparedStatement preStmt = connection.prepareStatement(sql);
+
+		preStmt.setInt(1, accountId);
+
+		preStmt.setInt(2, courseId);
+
+		preStmt.executeUpdate();
 	}
 }

@@ -8,7 +8,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 
 public class CourseServices {
-
 	public void showAllCourses() throws SQLException {
 		Connection connection = SQLConnection.makeConnection();
 
