@@ -9,10 +9,10 @@ public class Main {
         Scanner keyboard = new Scanner(System.in);
         
         Database database = new Database();
-        UserServices UserServices = new UserServices();
+        AccountServices AccountServices = new AccountServices();
         CourseServices CourseServices = new CourseServices();
         
-        showLoginAndRegisterMenuAndTheirFunctionalities(database, keyboard);
+        showLoginAndRegisterMenuAndTheirFunctionalities(database, keyboard, AccountServices, CourseServices);
 
         while (true) {
             CourseServices.showAllCourses();
@@ -20,7 +20,7 @@ public class Main {
         }
     }
     
-    public static void showLoginAndRegisterMenuAndTheirFunctionalities (Database database, Scanner keyboard) {
+    public static void showLoginAndRegisterMenuAndTheirFunctionalities (Database database, Scanner keyboard, AccountServices AccountServices, CourseServices CourseServices) {
     	final int SHOW_MENU_LOGIN = 1;
         final int SHOW_MENU_REGISTER = 2;
     	int input;
@@ -32,38 +32,41 @@ public class Main {
             input = keyboard.nextInt();
             switch (input) {
                 case SHOW_MENU_LOGIN:
-                	UserServices.login(keyboard, database);
+                	AccountServices.getLogInInfo(keyboard, database, AccountServices);
                     break;
 
                 case SHOW_MENU_REGISTER:
-                	UserServices.registerNewUser(keyboard, database);
+                	AccountServices.getRegisterInfo(keyboard, database);
                     break;
 
                 default:
                     System.out.println("----------------------");
                     System.out.println("Invalid Input! Try Again!");
             }
-        } while (database.getUser() == null);
+        } while (database.getAccount() == null);
     }
     
-    public static void getLogInInfo (Scanner keyboard, Database database, AuthenticationService authService) {
+    public static void getLogInInfo (Scanner keyboard, Database database, AccountServices AccountServices) {
     	System.out.println("----------------------");
         System.out.print("Enter your ID: ");
         String inputID = keyboard.next();
         System.out.print("Enter your Password: ");
         String inputPassword = keyboard.next();
-        database.setUser(authService.logInAccount(inputID, inputPassword));
-        if (database.getUser() == null) {
+        boolean logInStatus = AccountServices.login(inputID, inputPassword);
+        do {
+        	
+        } while (logInStatus == false);
+        if (logInStatus == false) {
             System.out.println("----------------------");
             System.out.println("Wrong credentials! Try Again!");
         } else {
-            if (database.getUser().getFailedAttempts() <= 3) {
+            if (database.getAccount().getFailedAttempts() <= 3) {
                 System.out.println("----------------------");
-                System.out.println("Welcome " + database.getUser().getName());
+                System.out.println("Welcome " + database.getAccount().getName());
             } else {
                 System.out.println("----------------------");
-                System.out.println("Your account is blocked!");
-                database.setUser(null);
+                System.out.println("Your Account is blocked!");
+                database.setAccount(null);
             }
         }
     }
@@ -82,15 +85,15 @@ public class Main {
         System.out.println("Account registered Successfully!");
     }
     
-    public static void showUserEnrolledClasses (Scanner keyboard, Database database) {
+    public static void showAccountEnrolledClasses (Scanner keyboard, Database database) {
     	int enrolledClassesIndex = 1;
-    	if (database.getUser().enrolledCourses.equals(new ArrayList<Course>())) {
+    	if (database.getAccount().enrolledCourses.equals(new ArrayList<Course>())) {
             System.out.println("----------------------");
             System.out.println("You have not enrolled in any courses!");
         } else {
             System.out.println("----------------------");
             System.out.println("You are currently enrolled in:");
-            for (Course course : database.getUser().enrolledCourses) {
+            for (Course course : database.getAccount().enrolledCourses) {
                 System.out.print(enrolledClassesIndex + ". " + course.getName() + " - ");
                 ArrayList<Mentor> courseMentors = course.getMentors();
                 for (int j = 0; j < courseMentors.size(); j++) {
@@ -111,7 +114,7 @@ public class Main {
         String courseChoice = keyboard.next();
 		
         if (courseChoice.equals("0")) {
-        	showUserEnrolledClasses (keyboard, database);
+        	showAccountEnrolledClasses (keyboard, database);
         } else {
             int chosenClass = Integer.parseInt(courseChoice) - 1;
             if (chosenClass >= database.getCourses().size()) {
@@ -132,7 +135,7 @@ public class Main {
                 break;
     			
             case SHOW_ENROLL_RESULT:
-                database.getUser().enrolledCourses.add(database.getCourses().get(chosenClass));
+                database.getAccount().enrolledCourses.add(database.getCourses().get(chosenClass));
                 database.getCourses().get(chosenClass).setIsEnrolled(true);
                 System.out.println("----------------------");
                 System.out.println("Class enrolled successfully!");
