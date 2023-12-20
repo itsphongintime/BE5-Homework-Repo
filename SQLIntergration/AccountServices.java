@@ -11,7 +11,7 @@ public class AccountServices {
 		Connection connection = SQLConnection.makeConnection();
 		PreparedStatement preStmt = null;
 
-		String SQL = "INSERT INTO user (`name`, `username`, `password`) VALUES (?, ?, ?);";
+		String SQL = "INSERT INTO accounts (`name`, `username`, `password`) VALUES (?, ?, ?);";
 
 		preStmt = connection.prepareStatement(SQL);
 
