@@ -36,6 +36,39 @@ public class CourseServices {
 			System.out.println(course.getId() + ". " + course.getName());
 		}
 	}
+	
+	public void showCourseDetails(int id) throws SQLException {
+		Connection connection = SQLConnection.makeConnection();
+		
+		String sql = "SELECT c.*, m.name as mentorName FROM course c "
+				+ "JOIN coursesmentors cm ON c.id = cm.course_id "
+				+ "JOIN mentors m ON m.id = cm.mentor_id WHERE c.id = ? "
+				+ "GROUP BY c.id, c.name, c.begin, c.end, c.fee";
+
+		PreparedStatement preStmt = connection.prepareStatement(sql);
+		
+		preStmt.setInt(1, id);
+
+		ResultSet resultSet = preStmt.executeQuery();
+
+		Course course = new Course();
+		course.setId(resultSet.getInt("ID"));
+		course.setName(resultSet.getString("Name"));
+		course.setBegin(resultSet.getDate("BeginDate"));
+		course.setEnd(resultSet.getDate("EndDate"));
+		course.setFee(resultSet.getInt("Fee"));
+		course.setMentors(getMentorsViaCourseID(course.getId(), connection));
+
+		System.out.println("----------------------");
+		System.out.println(course.getName());
+		System.out.println("Course's Mentors:");
+		for (Mentor mentor : course.getMentors()) {
+			System.out.println(mentor.getName());
+		}
+		System.out.println("From " + course.getBegin());
+		System.out.println("To " + course.getEnd());
+		System.out.println("Course's fee: AUD" + course.getFee());
+	}
 
 	public ArrayList<Mentor> getMentorsViaCourseID(int courseId, Connection connection) throws SQLException {
 		String sql = "SELECT m.* FROM courses c "
@@ -77,38 +110,5 @@ public class CourseServices {
 			mentors.add(mentor);
 		}
 		return mentors;
-	}
-
-	public void showCourseDetails(int id) throws SQLException {
-		Connection connection = SQLConnection.makeConnection();
-		
-		String sql = "SELECT c.*, m.name as mentorName FROM course c "
-				+ "JOIN coursesmentors cm ON c.id = cm.course_id "
-				+ "JOIN mentors m ON m.id = cm.mentor_id WHERE c.id = ? "
-				+ "GROUP BY c.id, c.name, c.begin, c.end, c.fee";
-
-		PreparedStatement preStmt = connection.prepareStatement(sql);
-		
-		preStmt.setInt(1, id);
-
-		ResultSet resultSet = preStmt.executeQuery();
-
-		Course course = new Course();
-		course.setId(resultSet.getInt("ID"));
-		course.setName(resultSet.getString("Name"));
-		course.setBegin(resultSet.getDate("BeginDate"));
-		course.setEnd(resultSet.getDate("EndDate"));
-		course.setFee(resultSet.getInt("Fee"));
-		course.setMentors(getMentorsViaCourseID(course.getId(), connection));
-
-		System.out.println("----------------------");
-		System.out.println(course.getName());
-		System.out.println("Course's Mentors:");
-		for (Mentor mentor : course.getMentors()) {
-			System.out.println(mentor.getName());
-		}
-		System.out.println("From " + course.getBegin());
-		System.out.println("To " + course.getEnd());
-		System.out.println("Course's fee: AUD" + course.getFee());
 	}
 }

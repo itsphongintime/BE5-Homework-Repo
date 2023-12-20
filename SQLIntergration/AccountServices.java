@@ -25,7 +25,7 @@ public class AccountServices {
 		System.out.println("Account Registered Successfully!");
 	}
 
-	public boolean login(String username, String password) throws SQLException {
+	public int login(String username, String password) throws SQLException {
 		Connection connection = SQLConnection.makeConnection();
 
 		String sql = "SELECT u.* FROM user u WHERE username = ?";
@@ -38,32 +38,32 @@ public class AccountServices {
 		if (!resultSet.next()) {
 			System.out.println("----------------------");
 			System.out.println("Account not found. Please try again.");
-			return false;
+			return -1;
 		}
 
 		Account account = new Account();
+		account.setId(resultSet.getInt("ID"));
 		account.setUsername(resultSet.getString("email"));
 		account.setPassword(resultSet.getString("password"));
 		account.setFailedAttempts(resultSet.getInt("FailedAttempts"));
 
 		if (!account.getPassword().equals(password)) {
 			System.out.println("----------------------");
-			System.out.println("Incorrect password. Please try again.");
+            System.out.println("Wrong credentials! Try Again!");
 			updateFailedAttempts(account.getUsername());
-			return false;
+			return -1;
 		}
 
 		if (account.getFailedAttempts() >= 4) {
 			System.out.println("----------------------");
-			System.out.println("Account is locked!");
-			return false;
+			System.out.println("Your Account is locked!");
+			return -1;
 
 		} else {
 			System.out.println("----------------------");
 			System.out.println("Login successfully!");
+			return account.getId();
 		}
-
-		return true;
 	}
 
 	public void updateFailedAttempts(String username) throws SQLException {
