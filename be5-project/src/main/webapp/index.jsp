@@ -3,16 +3,20 @@
 <!DOCTYPE html>
 
 <%@page import="entity.Product" %>
+<%@page import="entity.Category" %>
 <%@page import="dao.ProductDAO" %>
+<%@page import="dao.CategoryDAO" %>
 <%@page import="java.util.ArrayList"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <html>
 
 <%
-ProductDAO productDAO = new ProductDAO();
+CategoryDAO categoryDAO = new CategoryDAO();
+ProductDAO productDAO = new ProductDAO(categoryDAO);
 
 pageContext.setAttribute("latestProducts", productDAO.getLatestProducts());
+pageContext.setAttribute("categories", categoryDAO.getAllCategories());
 %>
 
 
@@ -49,7 +53,7 @@ pageContext.setAttribute("latestProducts", productDAO.getLatestProducts());
     <!-- header section strats -->
     <header class="header_section">
       <nav class="navbar navbar-expand-lg custom_nav-container ">
-        <a class="navbar-brand" href="index.html">
+        <a class="navbar-brand" href="index.jsp">
           <span>
             Giftos
           </span>
@@ -61,27 +65,13 @@ pageContext.setAttribute("latestProducts", productDAO.getLatestProducts());
         <div class="collapse navbar-collapse innerpage_navbar" id="navbarSupportedContent">
           <ul class="navbar-nav  ">
             <li class="nav-item ">
-              <a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="index.jsp">Home <span class="sr-only">(current)</span></a>
             </li>
-            <li class="nav-item active">
-              <a class="nav-link" href="shop.html">
-                Shop
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="why.html">
-                Why Us
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="testimonial.html">
-                Testimonial
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="contact.html">Contact Us</a>
-            </li>
-          </ul>
+            <c:forEach items="${categories}" var="categories">
+            	<li class="nav-item ">
+            		<a class="nav-link" href="category-products.jsp?categoryId=${categories.id}">${categories.name}</a>
+            	</li>
+            </c:forEach>
           <div class="user_option">
             <a href="">
               <i class="fa fa-user" aria-hidden="true"></i>
@@ -101,10 +91,10 @@ pageContext.setAttribute("latestProducts", productDAO.getLatestProducts());
         </div>
       </nav>
     </header>
-    <!-- end header section -->
-
-  </div>
+   </div>
   <!-- end hero area -->
+
+	
 
   <!-- shop section -->
 

@@ -3,16 +3,20 @@
 <!DOCTYPE html>
 
 <%@page import="entity.Product" %>
+<%@page import="entity.Category" %>
 <%@page import="dao.ProductDAO" %>
+<%@page import="dao.CategoryDAO" %>
 <%@page import="java.util.ArrayList"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <html>
 
 <%
-ProductDAO productDAO = new ProductDAO();
+CategoryDAO categoryDAO = new CategoryDAO();
+ProductDAO productDAO = new ProductDAO(categoryDAO);
 
 pageContext.setAttribute("latestProducts", productDAO.getAllProducts());
+pageContext.setAttribute("categories", categoryDAO.getAllCategories());
 %>
 
 
@@ -63,24 +67,11 @@ pageContext.setAttribute("latestProducts", productDAO.getAllProducts());
             <li class="nav-item ">
               <a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
             </li>
-            <li class="nav-item active">
-              <a class="nav-link" href="shop.html">
-                Shop
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="why.html">
-                Why Us
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="testimonial.html">
-                Testimonial
-              </a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="contact.html">Contact Us</a>
-            </li>
+            <c:forEach items="${categories}" var="categories">
+            	<li class="nav-item ">
+            		<a class="nav-link" href="category-products.jsp?categoryId=${categories.id}">${categories.name}</a>
+            	</li>
+            </c:forEach>
           </ul>
           <div class="user_option">
             <a href="">

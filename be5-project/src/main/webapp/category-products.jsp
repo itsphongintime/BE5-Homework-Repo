@@ -12,21 +12,20 @@
 <html>
 
 <%
-	String productId = request.getParameter("productId");
+String categoryId = request.getParameter("categoryId");
 
-	Integer intProductId = null;
-	
-	if (productId != null) {
-		intProductId = Integer.parseInt(productId);
-	}
+Integer intCategoryId = null;
 
-	CategoryDAO categoryDAO = new CategoryDAO();
-	ProductDAO productDAO = new ProductDAO(categoryDAO);
+if (categoryId != null) {
+	intCategoryId = Integer.parseInt(categoryId);
+}
 
-	Product product = productDAO.getProductById(intProductId);
+CategoryDAO categoryDAO = new CategoryDAO();
+ProductDAO productDAO = new ProductDAO(categoryDAO);
 
-	pageContext.setAttribute("product", product);
-	pageContext.setAttribute("categories", categoryDAO.getAllCategories());
+pageContext.setAttribute("products", productDAO.getProductByCategoryId(intCategoryId));
+pageContext.setAttribute("categories", categoryDAO.getAllCategories());
+pageContext.setAttribute("currCategory", categoryDAO.getCategoryById(intCategoryId));
 %>
 
 
@@ -63,7 +62,7 @@
     <!-- header section strats -->
     <header class="header_section">
       <nav class="navbar navbar-expand-lg custom_nav-container ">
-        <a class="navbar-brand" href="index.jsp">
+        <a class="navbar-brand" href="index.html">
           <span>
             Giftos
           </span>
@@ -75,7 +74,7 @@
         <div class="collapse navbar-collapse innerpage_navbar" id="navbarSupportedContent">
           <ul class="navbar-nav  ">
             <li class="nav-item ">
-              <a class="nav-link" href="index.jsp">Home <span class="sr-only">(current)</span></a>
+              <a class="nav-link" href="index.html">Home <span class="sr-only">(current)</span></a>
             </li>
             <c:forEach items="${categories}" var="categories">
             	<li class="nav-item ">
@@ -113,14 +112,16 @@
     <div class="container">
       <div class="heading_container heading_center">
         <h2>
-          Products' Details
+          ${currCategory.name}'s products
         </h2>
       </div>
       <div class="row">
       
+      
+      <c:forEach items="${products}" var="product">
       <div class="col-sm-6 col-md-4 col-lg-3">
           <div class="box">
-            <a href="product-details.jsp?productId = ${product.id}">
+            <a href="product-details.jsp?productId=${product.id}">
               <div class="img-box">
                 <img src="images/${product.imgName}" alt="">
               </div>
@@ -132,24 +133,11 @@
                   Price <span>${product.price}</span>
                 </h6>
               </div>
-              <div class="new">
-                <span>
-                  New
-                </span>
-              </div>
             </a>
           </div>
         </div>
-        
-        <div class="col-sm-6 col-md-4 col-lg-9">
-          <div class="box">
-            Quantity: ${product.quantity}
-            <br>
-            Description: ${product.description}
-          </div>
-        </div>
+      </c:forEach>
 
-      </div>
     </div>
   </section>
 

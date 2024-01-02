@@ -8,12 +8,13 @@ public class Product {
 	private boolean isNew;
 	private int quantity;
 	private String description;
+	private Category category;
 	
 	public Product() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public Product(int id, String name, int price, String imgName, boolean isNew, int quantity, String description) {
+	public Product(int id, String name, int price, String imgName, boolean isNew, int quantity, String description, Category category) {
 		super();
 		this.id = id;
 		this.name = name;
@@ -22,6 +23,7 @@ public class Product {
 		this.isNew = isNew;
 		this.quantity = quantity;
 		this.description = description;
+		this.category = category;
 	}
 
 	public String getName() {
@@ -82,6 +84,14 @@ public class Product {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Category getCategory() {
+		return category;
+	}
+
+	public void setCategory(Category category) {
+		this.category = category;
 	}
 	
 	
